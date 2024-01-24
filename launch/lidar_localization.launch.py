@@ -20,20 +20,6 @@ def generate_launch_description():
 
     ld = launch.LaunchDescription()
 
-    lidar_tf = launch_ros.actions.Node(
-        name='lidar_tf',
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['0','0','0','0','0','0','1','base_link','velodyne']
-        )
-
-    imu_tf = launch_ros.actions.Node(
-        name='imu_tf',
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['0','0','0','0','0','0','1','base_link','imu_link']
-        )
-
     localization_param_dir = launch.substitutions.LaunchConfiguration(
         'localization_param_dir',
         default=os.path.join(
@@ -47,7 +33,6 @@ def generate_launch_description():
         package='lidar_localization_ros2',
         executable='lidar_localization_node',
         parameters=[localization_param_dir],
-        remappings=[('/cloud','/velodyne_points')],
         output='screen')
 
     to_inactive = launch.actions.EmitEvent(
@@ -90,7 +75,6 @@ def generate_launch_description():
     ld.add_action(from_inactive_to_active)
 
     ld.add_action(lidar_localization)
-    ld.add_action(lidar_tf)
     ld.add_action(to_inactive)
 
     return ld

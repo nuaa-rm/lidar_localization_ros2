@@ -20,7 +20,6 @@
       initial_pose_qz: 0.0
       initial_pose_qw: 0.0
       frequency: 0.05 # 计算频率
-      use_odom: false # 点云配置初始姿态是否使用里程计
       use_imu: false # 是否使用九轴IMU进行点云畸变矫正
       enable_debug: true
       global_frame_id: map
@@ -29,4 +28,3 @@
       point_topic: "/livox/lidar_PointCloud2"
       odom_topic: "/livox/odometry"
       imu_topic: "/livox/imu"
-      z_offset: 1.0 # TODO:激光雷达高度

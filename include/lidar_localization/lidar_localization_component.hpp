@@ -41,7 +41,7 @@ using namespace std::chrono_literals;
 class PCLLocalization : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  explicit PCLLocalization(const rclcpp::NodeOptions & options);
+  explicit PCLLocalization(const rclcpp::NodeOptions &options);
 
   using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -49,8 +49,8 @@ public:
   CallbackReturn on_activate(const rclcpp_lifecycle::State &);
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State &);
   CallbackReturn on_cleanup(const rclcpp_lifecycle::State &);
-  CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state);
-  CallbackReturn on_error(const rclcpp_lifecycle::State & state);
+  CallbackReturn on_shutdown(const rclcpp_lifecycle::State &state);
+  CallbackReturn on_error(const rclcpp_lifecycle::State &state);
 
   void initializeParameters();
   void initializePubSub();
@@ -68,19 +68,18 @@ public:
   tf2_ros::TransformListener tflistener_;
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::ConstSharedPtr
-    initial_pose_sub_;
+      initial_pose_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::ConstSharedPtr
-    odom_sub_;
+      odom_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::ConstSharedPtr
-    cloud_sub_;
+      cloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::ConstSharedPtr
-    imu_sub_;
+      imu_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr corrent_pose_with_cov_stamped_ptr_;
   boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> registration_;
   pcl::VoxelGrid<pcl::PointXYZI> voxel_grid_filter_;
-  sensor_msgs::msg::PointCloud2::SharedPtr last_scan_ptr_;
   sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr_;
   nav_msgs::msg::Odometry::ConstSharedPtr odom_msg_ptr_;
   geometry_msgs::msg::TransformStamped transform_stamped;
@@ -89,6 +88,7 @@ public:
   bool odom_recieved_{false};
   bool cloud_recieved_{false};
   bool initialpose_recieved_{false};
+  bool set_initial_pose_{false};
 
   // parameters
   std::string global_frame_id_;
@@ -107,7 +107,6 @@ public:
   double transform_epsilon_;
   double voxel_leaf_size_;
   std::string pcd_path;
-  bool set_initial_pose_{false};
   double initial_pose_x_;
   double initial_pose_y_;
   double initial_pose_z_;
@@ -115,10 +114,8 @@ public:
   double initial_pose_qy_;
   double initial_pose_qz_;
   double initial_pose_qw_;
-  double z_offset;
   double frequency;
 
-  bool use_odom_{false};
   double last_odom_received_time_;
   bool use_imu_{false};
   bool enable_debug_{false};

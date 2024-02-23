@@ -1,6 +1,6 @@
 /**:
     ros__parameters:
-      registration_method: "NDT_OMP" # “NDT”或“GICP”或“NDT_OMP”或“GICP_OMP”
+      registration_method: "GICP" # “NDT”或“GICP”或“NDT_OMP”或“GICP_OMP”
       score_threshold: 2.0 # 分数阈值
       ndt_resolution: 1.0 # NDT分辨率
       ndt_step_size: 0.1 # NDT步长
@@ -19,7 +19,7 @@
       initial_pose_qy: 0.0
       initial_pose_qz: 0.0
       initial_pose_qw: 0.0
-      frequency: 0.05 # 计算频率
+      frequency: 1.0 # 计算频率
       use_imu: false # 是否使用九轴IMU进行点云畸变矫正
       enable_debug: true
       global_frame_id: map

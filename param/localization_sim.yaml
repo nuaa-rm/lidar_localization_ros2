@@ -10,7 +10,7 @@
       scan_max_range: 100.0 # 激光最大范围
       scan_min_range: 1.0 # 激光最小范围
       scan_period: 0.1 # 激光周期
-      pcd_path: "/home/dovejh/projects/point_lio_ros2/src/point_lio_ros2/point_lio/PCD/test2/scans.pcd"
+      pcd_path: "/home/dovejh/projects/auto_sentry2024/src/auto_sentry2024/robot_bring_up/PCD/test2/scans.pcd"
       set_initial_pose: true
       initial_pose_x: 0.0
       initial_pose_y: 0.0

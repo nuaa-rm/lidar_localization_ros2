@@ -25,7 +25,7 @@ def generate_launch_description():
         default=os.path.join(
             get_package_share_directory('lidar_localization_ros2'),
             'param',
-            'localization.yaml'))
+            'localization_sim.yaml'))
 
     lidar_localization = launch_ros.actions.LifecycleNode(
         name='lidar_localization',

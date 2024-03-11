@@ -56,10 +56,8 @@ public:
   void initializePubSub();
   void initializeRegistration();
   void initialPoseReceived(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
-  void odomReceived(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void imuReceived(const sensor_msgs::msg::Imu::ConstSharedPtr msg);
   void cloudReceived(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-  void timerCallback();
   // void gnssReceived();
 
   tf2_ros::TransformBroadcaster broadcaster_;
@@ -69,24 +67,17 @@ public:
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::ConstSharedPtr
       initial_pose_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::ConstSharedPtr
-      odom_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::ConstSharedPtr
       cloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::ConstSharedPtr
       imu_sub_;
-  rclcpp::TimerBase::SharedPtr timer_;
 
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr corrent_pose_with_cov_stamped_ptr_;
+  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr initialize_pose_;
   boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> registration_;
   pcl::VoxelGrid<pcl::PointXYZI> voxel_grid_filter_;
-  sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_ptr_;
-  nav_msgs::msg::Odometry::ConstSharedPtr odom_msg_ptr_;
   geometry_msgs::msg::TransformStamped transform_stamped;
 
   bool map_recieved_{false};
-  bool odom_recieved_{false};
-  bool cloud_recieved_{false};
   bool initialpose_recieved_{false};
   bool set_initial_pose_{false};
 
@@ -97,7 +88,6 @@ public:
   std::string registration_method_;
   std::string point_topic;
   std::string imu_topic;
-  std::string odom_topic;
   double scan_max_range_;
   double scan_min_range_;
   double scan_period_;

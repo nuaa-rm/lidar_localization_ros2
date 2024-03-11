@@ -8,7 +8,7 @@
       transform_epsilon: 0.01 # 变换中的小量用于停止匹配迭代
       voxel_leaf_size: 0.2 # 输入点云的下采样大小
       scan_max_range: 100.0 # 激光最大范围
-      scan_min_range: 1.0 # 激光最小范围
+      scan_min_range: 0.3 # 激光最小范围
       scan_period: 0.1 # 激光周期
       pcd_path: "/home/sentry/auto_sentry2024/src/auto_sentry2024/point_lio_ros2/point_lio/PCD/scans.pcd"
       set_initial_pose: true
@@ -21,10 +21,9 @@
       initial_pose_qw: 0.0
       frequency: 1.0 # 计算频率
       use_imu: false # 是否使用九轴IMU进行点云畸变矫正
-      enable_debug: true
+      enable_debug: false
       global_frame_id: map
       odom_frame_id: odom
       base_frame_id: livox # 和point-lio保持一致
-      point_topic: "/livox/lidar_PointCloud2"
-      odom_topic: "/livox/odometry"
+      point_topic: "/cloud_registered"
       imu_topic: "/livox/imu"

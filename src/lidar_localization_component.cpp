@@ -32,7 +32,6 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions &options)
   declare_parameter("enable_debug", false);
   declare_parameter("point_topic", "/points_raw");
   declare_parameter("imu_topic", "/imu/data");
-  declare_parameter("odom_topic", "/odom");
   declare_parameter("frequency", 0.1);
 }
 
@@ -45,7 +44,6 @@ CallbackReturn PCLLocalization::on_configure(const rclcpp_lifecycle::State &)
   initializeParameters();
   initializePubSub();
   initializeRegistration();
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000 / frequency)), std::bind(&PCLLocalization::timerCallback, this));
 
   RCLCPP_INFO(get_logger(), "Configuring end");
   return CallbackReturn::SUCCESS;
@@ -111,7 +109,6 @@ CallbackReturn PCLLocalization::on_cleanup(const rclcpp_lifecycle::State &)
 {
   RCLCPP_INFO(get_logger(), "Cleaning Up");
   initial_pose_sub_.reset();
-  odom_sub_.reset();
   cloud_sub_.reset();
   imu_sub_.reset();
 
@@ -162,7 +159,6 @@ void PCLLocalization::initializeParameters()
   get_parameter("enable_debug", enable_debug_);
   get_parameter("point_topic", point_topic);
   get_parameter("imu_topic", imu_topic);
-  get_parameter("odom_topic", odom_topic);
   get_parameter("frequency", frequency);
 }
 
@@ -173,10 +169,6 @@ void PCLLocalization::initializePubSub()
   initial_pose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "initialpose", rclcpp::SystemDefaultsQoS(),
       std::bind(&PCLLocalization::initialPoseReceived, this, std::placeholders::_1));
-
-  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-      odom_topic, rclcpp::SensorDataQoS(),
-      std::bind(&PCLLocalization::odomReceived, this, std::placeholders::_1));
 
   cloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       point_topic, rclcpp::SensorDataQoS(),
@@ -250,23 +242,16 @@ void PCLLocalization::initialPoseReceived(const geometry_msgs::msg::PoseWithCova
   {
     RCLCPP_WARN(this->get_logger(), "initialpose_frame_id does not match global_frame_id");
   }
-  std::cout << "x:" << msg->pose.pose.position.x << " y:" << msg->pose.pose.position.y << " z:" << msg->pose.pose.position.z << std::endl;
+  RCLCPP_INFO(get_logger(), "x: %f, y: %f, z: %f", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
   initialpose_recieved_ = true;
   transform_stamped.header.stamp = msg->header.stamp;
   transform_stamped.transform.translation.x = msg->pose.pose.position.x;
   transform_stamped.transform.translation.y = msg->pose.pose.position.y;
   transform_stamped.transform.translation.z = msg->pose.pose.position.z;
   transform_stamped.transform.rotation = msg->pose.pose.orientation;
-  corrent_pose_with_cov_stamped_ptr_ = msg;
-  timerCallback();
+  initialize_pose_ = msg;
 
   RCLCPP_INFO(get_logger(), "initialPoseReceived end");
-}
-
-void PCLLocalization::odomReceived(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
-{
-  odom_msg_ptr_ = msg;
-  odom_recieved_ = true;
 }
 
 void PCLLocalization::imuReceived(const sensor_msgs::msg::Imu::ConstSharedPtr msg)
@@ -318,50 +303,25 @@ void PCLLocalization::imuReceived(const sensor_msgs::msg::Imu::ConstSharedPtr ms
 
 void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-  cloud_msg_ptr_ = msg;
-  cloud_recieved_ = true;
-  if (!relocation_)
-  {
-    timerCallback();
-  }
-  else
-  {
-    transform_stamped.header.stamp = msg->header.stamp;
-    broadcaster_.sendTransform(transform_stamped);
-  }
-}
-
-void PCLLocalization::timerCallback()
-{
-  if (!map_recieved_ || !initialpose_recieved_ || !cloud_recieved_ || !odom_recieved_)
+  if (!map_recieved_ || !initialpose_recieved_)
   {
     return;
   }
-  geometry_msgs::msg::TransformStamped transform_odom_baselink;
-  transform_odom_baselink.header.stamp = odom_msg_ptr_->header.stamp;
-  transform_odom_baselink.header.frame_id = odom_frame_id_;
-  transform_odom_baselink.child_frame_id = base_frame_id_;
-  transform_odom_baselink.transform.translation.x = odom_msg_ptr_->pose.pose.position.x;
-  transform_odom_baselink.transform.translation.y = odom_msg_ptr_->pose.pose.position.y;
-  transform_odom_baselink.transform.translation.z = odom_msg_ptr_->pose.pose.position.z;
-  transform_odom_baselink.transform.rotation = odom_msg_ptr_->pose.pose.orientation;
-  sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg_odom_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
-  tf2::doTransform(*cloud_msg_ptr_, *cloud_msg_odom_ptr, transform_odom_baselink);
-
+  // 将点云转换为pcl::PointCloud<pcl::PointXYZI>格式
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::fromROSMsg(*cloud_msg_odom_ptr, *cloud_ptr);
-
+  pcl::fromROSMsg(*msg, *cloud_ptr);
+  // 如果使用IMU，则进行去畸变处理
   if (use_imu_)
   {
-    double received_time = cloud_msg_ptr_->header.stamp.sec +
-                           cloud_msg_ptr_->header.stamp.nanosec * 1e-9;
+    double received_time = msg->header.stamp.sec +
+                           msg->header.stamp.nanosec * 1e-9;
     lidar_undistortion_.adjustDistortion(cloud_ptr, received_time);
   }
-
+  // 对点云进行滤波处理
   pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
   voxel_grid_filter_.setInputCloud(cloud_ptr);
   voxel_grid_filter_.filter(*filtered_cloud_ptr);
-
+  // 按最大最小扫描距离筛选
   double r;
   pcl::PointCloud<pcl::PointXYZI> tmp;
   for (const auto &p : filtered_cloud_ptr->points)
@@ -376,7 +336,7 @@ void PCLLocalization::timerCallback()
   registration_->setInputSource(tmp_ptr);
 
   Eigen::Affine3d affine;
-  tf2::fromMsg(corrent_pose_with_cov_stamped_ptr_->pose.pose, affine);
+  tf2::fromMsg(initialize_pose_->pose.pose, affine);
 
   Eigen::Matrix4f init_guess = affine.matrix().cast<float>();
 
@@ -399,27 +359,21 @@ void PCLLocalization::timerCallback()
   Eigen::Quaterniond quat_eig(rot_mat);
   geometry_msgs::msg::Quaternion quat_msg = tf2::toMsg(quat_eig);
 
-  corrent_pose_with_cov_stamped_ptr_->header.stamp = cloud_msg_ptr_->header.stamp;
-  corrent_pose_with_cov_stamped_ptr_->header.frame_id = global_frame_id_;
-  corrent_pose_with_cov_stamped_ptr_->pose.pose.position.x = static_cast<double>(final_transformation(0, 3));
-  corrent_pose_with_cov_stamped_ptr_->pose.pose.position.y = static_cast<double>(final_transformation(1, 3));
-  corrent_pose_with_cov_stamped_ptr_->pose.pose.position.z = static_cast<double>(final_transformation(2, 3));
-  corrent_pose_with_cov_stamped_ptr_->pose.pose.orientation = quat_msg;
-
   if (fitness_score > score_threshold_)
   {
     RCLCPP_WARN(get_logger(), "The fitness score is over %lf.", score_threshold_);
   }
   else
   {
-    relocation_ = true;
-    transform_stamped.header.stamp = cloud_msg_ptr_->header.stamp;
-    transform_stamped.header.frame_id = global_frame_id_;
-    transform_stamped.child_frame_id = odom_frame_id_;
+    transform_stamped.header.stamp = msg->header.stamp;
     transform_stamped.transform.translation.x = static_cast<double>(final_transformation(0, 3));
     transform_stamped.transform.translation.y = static_cast<double>(final_transformation(1, 3));
     transform_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
     transform_stamped.transform.rotation = quat_msg;
+    transform_stamped.header.frame_id = global_frame_id_;
+    transform_stamped.child_frame_id = odom_frame_id_;
+    broadcaster_.sendTransform(transform_stamped);
+    std::cout << "send transform" << std::endl;
   }
 
   if (enable_debug_)
@@ -447,3 +401,4 @@ void PCLLocalization::timerCallback()
     std::cout << "-----------------------------------------------------" << std::endl;
   }
 }
+

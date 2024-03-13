@@ -20,8 +20,12 @@
       initial_pose_qz: 0.0
       initial_pose_qw: 0.0
       frequency: 1.0 # 计算频率
+      cloud_frequency: 10.0 # 点云频率
+      static_time_threshold: 1.0 # 静止时间阈值
+      static_range_threshold: 0.1 # 静止范围阈值
+      force_relocate_time_threshold: 20.0 # 强制重定位时间阈值
       use_imu: false # 是否使用九轴IMU进行点云畸变矫正
-      enable_debug: false
+      enable_debug: true
       global_frame_id: map
       odom_frame_id: odom
       base_frame_id: livox # 和point-lio保持一致

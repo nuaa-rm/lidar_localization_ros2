@@ -104,7 +104,11 @@ public:
   double initial_pose_qy_;
   double initial_pose_qz_;
   double initial_pose_qw_;
-  double frequency;
+  double frequency_;
+  double cloud_frequency_;
+  double static_time_threshold_;
+  double static_range_threshold_;
+  double force_relocate_time_threshold_;
 
   double last_odom_received_time_;
   bool use_imu_{false};
@@ -112,6 +116,9 @@ public:
   bool relocation_{false};
 
   int ndt_num_threads_;
+  int skip_count_;
+  int static_count_;
+  geometry_msgs::msg::TransformStamped lasttransformStamped;
 
   // imu
   LidarUndistortion lidar_undistortion_;

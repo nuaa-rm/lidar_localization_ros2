@@ -33,6 +33,18 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions &options)
   declare_parameter("point_topic", "/points_raw");
   declare_parameter("imu_topic", "/imu/data");
   declare_parameter("frequency", 0.1);
+  declare_parameter("cloud_frequency", 0.1);
+  declare_parameter("static_time_threshold", 1.0);
+  declare_parameter("static_range_threshold", 0.1);
+  declare_parameter("force_relocate_time_threshold", 10.0);
+  skip_count_ = 0;
+  lasttransformStamped.transform.translation.x = 0;
+  lasttransformStamped.transform.translation.y = 0;
+  lasttransformStamped.transform.translation.z = 0;
+  lasttransformStamped.transform.rotation.x = 0;
+  lasttransformStamped.transform.rotation.y = 0;
+  lasttransformStamped.transform.rotation.z = 0;
+  lasttransformStamped.transform.rotation.w = 1;
 }
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -159,7 +171,11 @@ void PCLLocalization::initializeParameters()
   get_parameter("enable_debug", enable_debug_);
   get_parameter("point_topic", point_topic);
   get_parameter("imu_topic", imu_topic);
-  get_parameter("frequency", frequency);
+  get_parameter("frequency", frequency_);
+  get_parameter("cloud_frequency", cloud_frequency_);
+  get_parameter("static_time_threshold", static_time_threshold_);
+  get_parameter("static_range_threshold", static_range_threshold_);
+  get_parameter("force_relocate_time_threshold", force_relocate_time_threshold_);
 }
 
 void PCLLocalization::initializePubSub()
@@ -307,20 +323,48 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
   {
     return;
   }
-
+  transform_stamped.header.stamp = msg->header.stamp;
+  broadcaster_.sendTransform(transform_stamped);
   // 获取从map到odom的变换
   geometry_msgs::msg::TransformStamped transformStamped;
-  sensor_msgs::msg::PointCloud2 msg_odom;
   try
   {
     transformStamped = tfbuffer_.lookupTransform(odom_frame_id_, base_frame_id_, tf2::TimePoint());
-    tf2::doTransform(*msg, msg_odom, transformStamped);
   }
   catch (tf2::TransformException &ex)
   {
     RCLCPP_ERROR(this->get_logger(), "获取odom坐标系下的点云失败: %s", ex.what());
     return;
   }
+  // 判断是否已经静止了一段时间
+  if (abs(lasttransformStamped.transform.translation.x - transformStamped.transform.translation.x) < static_range_threshold_ &&
+      abs(lasttransformStamped.transform.translation.y - transformStamped.transform.translation.y) < static_range_threshold_ &&
+      abs(lasttransformStamped.transform.translation.z - transformStamped.transform.translation.z) < static_range_threshold_)
+  {
+    static_count_++;
+  }
+  else
+  {
+    static_count_ = 0;
+    lasttransformStamped.transform.translation = transformStamped.transform.translation;
+  }
+
+  // 判断是否到了下一次处理点云的时间
+  if(skip_count_ < force_relocate_time_threshold_ * cloud_frequency_)
+  {
+    if (skip_count_ < int(cloud_frequency_ / frequency_))
+    {
+      skip_count_++;
+      return;
+    }
+    if (static_count_ < static_time_threshold_ * cloud_frequency_)
+    {
+      return;
+    }
+  }
+  
+  sensor_msgs::msg::PointCloud2 msg_odom;
+  tf2::doTransform(*msg, msg_odom, transformStamped);
 
   // 将点云转换为pcl::PointCloud<pcl::PointXYZI>格式
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
@@ -381,15 +425,22 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
   else
   {
     transform_stamped.header.stamp = msg->header.stamp;
-    transform_stamped.transform.translation.x = static_cast<double>(final_transformation(0, 3));
-    transform_stamped.transform.translation.y = static_cast<double>(final_transformation(1, 3));
-    transform_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
-    transform_stamped.transform.rotation = quat_msg;
+    if (abs(transform_stamped.transform.translation.x - static_cast<double>(final_transformation(0, 3))) < 0.5 &&
+        abs(transform_stamped.transform.translation.y - static_cast<double>(final_transformation(1, 3))) < 0.5 &&
+        abs(transform_stamped.transform.translation.z - static_cast<double>(final_transformation(2, 3))) < 0.5)
+    {
+      transform_stamped.transform.translation.x = static_cast<double>(final_transformation(0, 3));
+      transform_stamped.transform.translation.y = static_cast<double>(final_transformation(1, 3));
+      transform_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
+      transform_stamped.transform.rotation = quat_msg;
+    }
     transform_stamped.header.frame_id = global_frame_id_;
     transform_stamped.child_frame_id = odom_frame_id_;
     broadcaster_.sendTransform(transform_stamped);
   }
 
+  static_count_ = 0;
+  skip_count_ = 0;
   if (enable_debug_)
   {
     std::cout << "number of filtered cloud points: " << filtered_cloud_ptr->size() << std::endl;

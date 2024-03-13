@@ -310,11 +310,11 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
 
   // 获取从map到odom的变换
   geometry_msgs::msg::TransformStamped transformStamped;
-  sensor_msgs::msg::PointCloud2::SharedPtr msg_odom;
+  sensor_msgs::msg::PointCloud2 msg_odom;
   try
   {
     transformStamped = tfbuffer_.lookupTransform(odom_frame_id_, base_frame_id_, tf2::TimePoint());
-    tf2::doTransform(*msg, *msg_odom, transformStamped);
+    tf2::doTransform(*msg, msg_odom, transformStamped);
   }
   catch (tf2::TransformException &ex)
   {
@@ -324,7 +324,7 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
 
   // 将点云转换为pcl::PointCloud<pcl::PointXYZI>格式
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::fromROSMsg(*msg_odom, *cloud_ptr);
+  pcl::fromROSMsg(msg_odom, *cloud_ptr);
   // 如果使用IMU，则进行去畸变处理
   if (use_imu_)
   {
@@ -388,7 +388,6 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
     transform_stamped.header.frame_id = global_frame_id_;
     transform_stamped.child_frame_id = odom_frame_id_;
     broadcaster_.sendTransform(transform_stamped);
-    std::cout << "send transform" << std::endl;
   }
 
   if (enable_debug_)

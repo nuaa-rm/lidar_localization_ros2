@@ -25,5 +25,5 @@
       global_frame_id: map
       odom_frame_id: odom
       base_frame_id: livox # 和point-lio保持一致
-      point_topic: "/cloud_registered"
+      point_topic: "/livox/lidar_PointCloud2"
       imu_topic: "/livox/imu"

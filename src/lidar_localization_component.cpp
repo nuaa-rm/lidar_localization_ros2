@@ -307,9 +307,24 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
   {
     return;
   }
+
+  // 获取从map到odom的变换
+  geometry_msgs::msg::TransformStamped transformStamped;
+  sensor_msgs::msg::PointCloud2::SharedPtr msg_odom;
+  try
+  {
+    transformStamped = tfbuffer_.lookupTransform(odom_frame_id_, base_frame_id_, tf2::TimePoint());
+    tf2::doTransform(*msg, *msg_odom, transformStamped);
+  }
+  catch (tf2::TransformException &ex)
+  {
+    RCLCPP_ERROR(this->get_logger(), "获取odom坐标系下的点云失败: %s", ex.what());
+    return;
+  }
+
   // 将点云转换为pcl::PointCloud<pcl::PointXYZI>格式
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::fromROSMsg(*msg, *cloud_ptr);
+  pcl::fromROSMsg(*msg_odom, *cloud_ptr);
   // 如果使用IMU，则进行去畸变处理
   if (use_imu_)
   {
@@ -401,4 +416,3 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
     std::cout << "-----------------------------------------------------" << std::endl;
   }
 }
-

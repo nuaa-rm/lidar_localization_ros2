@@ -425,15 +425,19 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
   else
   {
     transform_stamped.header.stamp = msg->header.stamp;
-    if (abs(transform_stamped.transform.translation.x - static_cast<double>(final_transformation(0, 3))) < 0.5 &&
-        abs(transform_stamped.transform.translation.y - static_cast<double>(final_transformation(1, 3))) < 0.5 &&
-        abs(transform_stamped.transform.translation.z - static_cast<double>(final_transformation(2, 3))) < 0.5)
-    {
-      transform_stamped.transform.translation.x = static_cast<double>(final_transformation(0, 3));
-      transform_stamped.transform.translation.y = static_cast<double>(final_transformation(1, 3));
-      transform_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
-      transform_stamped.transform.rotation = quat_msg;
-    }
+    // if (abs(transform_stamped.transform.translation.x - static_cast<double>(final_transformation(0, 3))) < 0.5 &&
+    //     abs(transform_stamped.transform.translation.y - static_cast<double>(final_transformation(1, 3))) < 0.5 &&
+    //     abs(transform_stamped.transform.translation.z - static_cast<double>(final_transformation(2, 3))) < 0.5)
+    // {
+    //   transform_stamped.transform.translation.x = static_cast<double>(final_transformation(0, 3));
+    //   transform_stamped.transform.translation.y = static_cast<double>(final_transformation(1, 3));
+    //   transform_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
+    //   transform_stamped.transform.rotation = quat_msg;
+    // }
+    transform_stamped.transform.translation.x = static_cast<double>(final_transformation(0, 3));
+    transform_stamped.transform.translation.y = static_cast<double>(final_transformation(1, 3));
+    transform_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
+    transform_stamped.transform.rotation = quat_msg;
     transform_stamped.header.frame_id = global_frame_id_;
     transform_stamped.child_frame_id = odom_frame_id_;
     broadcaster_.sendTransform(transform_stamped);

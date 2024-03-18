@@ -113,7 +113,6 @@ public:
   double last_odom_received_time_;
   bool use_imu_{false};
   bool enable_debug_{false};
-  bool relocation_{false};
 
   int ndt_num_threads_;
   int skip_count_;

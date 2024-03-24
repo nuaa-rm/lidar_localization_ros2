@@ -20,8 +20,9 @@
       initial_pose_qz: 0.0
       initial_pose_qw: 0.0
       frequency: 1.0 # 计算频率
-      cloud_frequency: 10.0 # 点云频率
-      static_time_threshold: 1.0 # 静止时间阈值
+      cloud_frequency: 20.0 # 点云频率
+      integral_time: 1.0 # 积分时间，单位s，将静止后多长时间内的点云积分用于匹配
+      static_time_threshold: 1.0 # 静止时间阈值，静止完成后开始积分，积分完成后开始匹配
       static_range_threshold: 0.1 # 静止范围阈值
       force_relocate_time_threshold: 20.0 # 强制重定位时间阈值
       use_imu: false # 是否使用九轴IMU进行点云畸变矫正

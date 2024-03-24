@@ -37,6 +37,7 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions &options)
   declare_parameter("static_time_threshold", 1.0);
   declare_parameter("static_range_threshold", 0.1);
   declare_parameter("force_relocate_time_threshold", 10.0);
+  declare_parameter("integral_time", 0.1);
   skip_count_ = 0;
   lasttransformStamped.transform.translation.x = 0;
   lasttransformStamped.transform.translation.y = 0;
@@ -45,6 +46,7 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions &options)
   lasttransformStamped.transform.rotation.y = 0;
   lasttransformStamped.transform.rotation.z = 0;
   lasttransformStamped.transform.rotation.w = 1;
+  integral_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 }
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -176,6 +178,7 @@ void PCLLocalization::initializeParameters()
   get_parameter("static_time_threshold", static_time_threshold_);
   get_parameter("static_range_threshold", static_range_threshold_);
   get_parameter("force_relocate_time_threshold", force_relocate_time_threshold_);
+  get_parameter("integral_time", integral_time_);
 }
 
 void PCLLocalization::initializePubSub()
@@ -362,13 +365,25 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
       return;
     }
   }
-  
+  integral_count_ = 0;
   sensor_msgs::msg::PointCloud2 msg_odom;
   tf2::doTransform(*msg, msg_odom, transformStamped);
 
   // 将点云转换为pcl::PointCloud<pcl::PointXYZI>格式
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::fromROSMsg(msg_odom, *cloud_ptr);
+  if(integral_count_ < integral_time_ * cloud_frequency_)
+  {
+    *integral_cloud_ += *cloud_ptr;
+    integral_count_++;
+    return;
+  }
+  else
+  {
+    *cloud_ptr = *integral_cloud_;
+    integral_count_ = 0;
+    integral_cloud_->clear();
+  }
   // 如果使用IMU，则进行去畸变处理
   if (use_imu_)
   {

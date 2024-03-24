@@ -47,6 +47,7 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions &options)
   lasttransformStamped.transform.rotation.z = 0;
   lasttransformStamped.transform.rotation.w = 1;
   integral_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  integral_count_ = 0;
 }
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -365,7 +366,6 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
       return;
     }
   }
-  integral_count_ = 0;
   sensor_msgs::msg::PointCloud2 msg_odom;
   tf2::doTransform(*msg, msg_odom, transformStamped);
 
@@ -376,11 +376,13 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
   {
     *integral_cloud_ += *cloud_ptr;
     integral_count_++;
+    std::cout << "integral_count: " << integral_count_ << std::endl;
     return;
   }
   else
   {
     *cloud_ptr = *integral_cloud_;
+    std::cout << "integral_count" << std::endl;
     integral_count_ = 0;
     integral_cloud_->clear();
   }

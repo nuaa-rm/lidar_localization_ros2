@@ -32,8 +32,7 @@ def generate_launch_description():
         namespace='',
         package='lidar_localization_ros2',
         executable='lidar_localization_node',
-        parameters=[localization_param_dir],
-        output='screen')
+        parameters=[localization_param_dir])
 
     to_inactive = launch.actions.EmitEvent(
         event=launch_ros.events.lifecycle.ChangeState(

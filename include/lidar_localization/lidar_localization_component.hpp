@@ -80,6 +80,7 @@ public:
     bool map_recieved_{false};
     bool initialpose_recieved_{false};
     bool set_initial_pose_{false};
+    bool locate_no_map_{false};
 
     // parameters
     std::string global_frame_id_;

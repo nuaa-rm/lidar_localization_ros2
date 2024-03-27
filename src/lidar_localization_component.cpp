@@ -38,6 +38,7 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions &options)
   declare_parameter("static_range_threshold", 0.1);
   declare_parameter("force_relocate_time_threshold", 10.0);
   declare_parameter("integral_time", 0.1);
+  declare_parameter("locate_no_map", false);
   skip_count_ = 0;
   lasttransformStamped.transform.translation.x = 0;
   lasttransformStamped.transform.translation.y = 0;
@@ -180,6 +181,16 @@ void PCLLocalization::initializeParameters()
   get_parameter("static_range_threshold", static_range_threshold_);
   get_parameter("force_relocate_time_threshold", force_relocate_time_threshold_);
   get_parameter("integral_time", integral_time_);
+  get_parameter("locate_no_map", locate_no_map_);
+  transform_stamped.header.frame_id = global_frame_id_;
+  transform_stamped.child_frame_id = odom_frame_id_;
+  transform_stamped.transform.rotation.x = 0;
+  transform_stamped.transform.rotation.y = 0;
+  transform_stamped.transform.rotation.z = 0;
+  transform_stamped.transform.rotation.w = 1;
+  transform_stamped.transform.translation.x = 0;
+  transform_stamped.transform.translation.y = 0;
+  transform_stamped.transform.translation.z = 0;
 }
 
 void PCLLocalization::initializePubSub()
@@ -325,10 +336,17 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
 {
   if (!map_recieved_ || !initialpose_recieved_)
   {
+    RCLCPP_WARN(get_logger(), "Map or initial pose is not received.");
     return;
   }
   transform_stamped.header.stamp = msg->header.stamp;
   broadcaster_.sendTransform(transform_stamped);
+  // 如果没有PCDmap，则不进行定位，直接发送初值
+  if (locate_no_map_)
+  {
+    RCLCPP_INFO(get_logger(), "No map, send initial pose");
+    return;
+  }
   // 获取从map到odom的变换
   geometry_msgs::msg::TransformStamped transformStamped;
   try

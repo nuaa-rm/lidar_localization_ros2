@@ -18,15 +18,17 @@
       initial_pose_qx: 0.0
       initial_pose_qy: 0.0
       initial_pose_qz: 0.0
-      initial_pose_qw: 0.0
+      initial_pose_qw: 1.0
       frequency: 1.0 # 计算频率
       cloud_frequency: 10.0 # 点云频率
+      integral_time: 1.0 # 积分时间，单位s，将静止后多长时间内的点云积分用于匹配
       static_time_threshold: 1.0 # 静止时间阈值
       static_range_threshold: 0.1 # 静止范围阈值
       force_relocate_time_threshold: 20.0 # 强制重定位时间阈值
       use_imu: false # 是否使用九轴IMU进行点云畸变矫正
       enable_debug: true
       global_frame_id: map
+      locate_no_map: true
       odom_frame_id: odom
       base_frame_id: base_footprint # 和point-lio保持一致
       point_topic: "/livox/lidar_PointCloud2"

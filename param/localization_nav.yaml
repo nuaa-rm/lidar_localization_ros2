@@ -6,7 +6,7 @@
       ndt_step_size: 0.1 # NDT步长
       ndt_num_threads: 0 # NDT线程数 0为使用最大允许线程数
       transform_epsilon: 0.01 # 变换中的小量用于停止匹配迭代
-      voxel_leaf_size: 0.2 # 输入点云的下采样大小
+      voxel_leaf_size: 0.05 # 输入点云的下采样大小
       scan_max_range: 100.0 # 激光最大范围
       scan_min_range: 0.3 # 激光最小范围
       scan_period: 0.1 # 激光周期
@@ -19,6 +19,13 @@
       initial_pose_qy: 0.0
       initial_pose_qz: -0.9935173808175841
       initial_pose_qw: 0.11368031497742864
+      # initial_pose_x: 0.0
+      # initial_pose_y: 0.0
+      # initial_pose_z: 0.0
+      # initial_pose_qx: 0.0
+      # initial_pose_qy: 0.0
+      # initial_pose_qz: 0.0
+      # initial_pose_qw: 1
       frequency: 1.0 # 计算频率
       cloud_frequency: 10.0 # 点云频率
       integral_time: 1.0 # 积分时间，单位s，将静止后多长时间内的点云积分用于匹配

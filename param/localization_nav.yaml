@@ -1,4 +1,4 @@
-/**:
+/lidar_localization:
     ros__parameters:
       registration_method: "NDT_OMP" # “NDT”或“GICP”或“NDT_OMP”或“GICP_OMP”
       score_threshold: 2.0 # 分数阈值
@@ -12,20 +12,13 @@
       scan_period: 0.1 # 激光周期
       pcd_path: "/home/sentry/auto_sentry2024/src/auto_sentry2024/robot_bring_up/PCD/RMUL/scans.pcd"
       set_initial_pose: true
-      initial_pose_x: 5.603888988494873
-      initial_pose_y: 2.1097302436828613
+      initial_pose_x: 0.0
+      initial_pose_y: 0.0
       initial_pose_z: 0.0
       initial_pose_qx: 0.0
       initial_pose_qy: 0.0
-      initial_pose_qz: -0.9935173808175841
-      initial_pose_qw: 0.11368031497742864
-      # initial_pose_x: 0.0
-      # initial_pose_y: 0.0
-      # initial_pose_z: 0.0
-      # initial_pose_qx: 0.0
-      # initial_pose_qy: 0.0
-      # initial_pose_qz: 0.0
-      # initial_pose_qw: 1
+      initial_pose_qz: 0.0
+      initial_pose_qw: 1
       frequency: 1.0 # 计算频率
       cloud_frequency: 10.0 # 点云频率
       integral_time: 1.0 # 积分时间，单位s，将静止后多长时间内的点云积分用于匹配

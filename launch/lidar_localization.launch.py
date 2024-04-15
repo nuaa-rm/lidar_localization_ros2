@@ -7,7 +7,7 @@ import launch.events
 import launch_ros
 import launch_ros.actions
 import launch_ros.events
-
+from launch.substitutions import LaunchConfiguration
 from launch import LaunchDescription
 from launch_ros.actions import LifecycleNode
 from launch_ros.actions import Node
@@ -20,20 +20,19 @@ def generate_launch_description():
 
     ld = launch.LaunchDescription()
 
-    localization_param_dir = launch.substitutions.LaunchConfiguration(
+    localization_param_dir = LaunchConfiguration(
         'localization_param_dir',
         default=os.path.join(
             get_package_share_directory('lidar_localization_ros2'),
             'param',
-            'localization_sim.yaml'))
+            'localization_nav.yaml'))
 
-    lidar_localization = launch_ros.actions.LifecycleNode(
+    lidar_localization = LifecycleNode(
         name='lidar_localization',
         namespace='',
         package='lidar_localization_ros2',
         executable='lidar_localization_node',
-        parameters=[localization_param_dir],
-        output='screen')
+        parameters=[localization_param_dir])
 
     to_inactive = launch.actions.EmitEvent(
         event=launch_ros.events.lifecycle.ChangeState(

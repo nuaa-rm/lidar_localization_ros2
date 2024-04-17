@@ -209,6 +209,10 @@ void PCLLocalization::initializePubSub()
       imu_topic, rclcpp::SensorDataQoS(),
       std::bind(&PCLLocalization::imuReceived, this, std::placeholders::_1));
 
+  status_pub_ = create_publisher<std_msgs::msg::Header>(
+      "relocation_status", rclcpp::SystemDefaultsQoS());
+  
+
   RCLCPP_INFO(get_logger(), "initializePubSub end");
 }
 
@@ -476,6 +480,9 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
     transform_stamped.header.frame_id = global_frame_id_;
     transform_stamped.child_frame_id = odom_frame_id_;
     broadcaster_.sendTransform(transform_stamped);
+    std_msgs::msg::Header status;
+    status.stamp = msg->header.stamp;
+    status_pub_->publish(status);
   }
 
   static_count_ = 0;

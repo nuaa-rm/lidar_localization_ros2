@@ -24,6 +24,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "std_msgs/msg/header.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
 
@@ -71,6 +72,8 @@ public:
         cloud_sub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::ConstSharedPtr
         imu_sub_;
+    rclcpp::Publisher<std_msgs::msg::Header>::SharedPtr
+        status_pub_;
 
     geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr initialize_pose_;
     boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> registration_;

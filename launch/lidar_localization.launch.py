@@ -23,9 +23,9 @@ def generate_launch_description():
     localization_param_dir = LaunchConfiguration(
         'localization_param_dir',
         default=os.path.join(
-            get_package_share_directory('lidar_localization_ros2'),
-            'param',
-            'localization_nav.yaml'))
+            get_package_share_directory('robot_bring_up'),
+            'config',
+            'sentry.yaml'))
 
     lidar_localization = LifecycleNode(
         name='lidar_localization',

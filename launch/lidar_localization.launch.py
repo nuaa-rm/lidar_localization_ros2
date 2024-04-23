@@ -8,9 +8,7 @@ import launch_ros
 import launch_ros.actions
 import launch_ros.events
 from launch.substitutions import LaunchConfiguration
-from launch import LaunchDescription
 from launch_ros.actions import LifecycleNode
-from launch_ros.actions import Node
 
 import lifecycle_msgs.msg
 
@@ -32,6 +30,7 @@ def generate_launch_description():
         namespace='',
         package='lidar_localization_ros2',
         executable='lidar_localization_node',
+        output='screen',
         parameters=[localization_param_dir])
 
     to_inactive = launch.actions.EmitEvent(

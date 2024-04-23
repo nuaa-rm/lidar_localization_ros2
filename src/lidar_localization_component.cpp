@@ -344,6 +344,7 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
     return;
   }
   transform_stamped.header.stamp = msg->header.stamp;
+  RCLCPP_INFO(get_logger(), "cloudReceived");
   broadcaster_.sendTransform(transform_stamped);
   // 如果没有PCDmap，则不进行定位，直接发送初值
   if (locate_no_map_)
@@ -417,8 +418,9 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::SharedP
   }
   // 对点云进行滤波处理
   pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>());
-  voxel_grid_filter_.setInputCloud(cloud_ptr);
-  voxel_grid_filter_.filter(*filtered_cloud_ptr);
+  // voxel_grid_filter_.setInputCloud(cloud_ptr);
+  // voxel_grid_filter_.filter(*filtered_cloud_ptr);
+  filtered_cloud_ptr = cloud_ptr;
   // 按最大最小扫描距离筛选
   double r;
   pcl::PointCloud<pcl::PointXYZI> tmp;
